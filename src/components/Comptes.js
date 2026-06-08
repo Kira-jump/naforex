@@ -7,7 +7,6 @@ import { Package,
 
 const serviceColors = { netflix: '#e50914', spotify: '#1db954', prime: '#00a8e1' };
 const serviceLabels = { netflix: 'Netflix', spotify: 'Spotify', prime: 'Prime' };
-const serviceMax = { netflix: 5, spotify: 6, prime: 6 };
 
 const emptyCompte = {
   nom: '', service: 'netflix', email: '',

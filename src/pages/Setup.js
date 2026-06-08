@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 
 const Setup = () => {
   const { setupUsers } = useApp();
-  const [step, setStep] = useState(1);
+  
   const [user1, setUser1] = useState({ username: '', password: '' });
   const [user2, setUser2] = useState({ username: '', password: '' });
   const [error, setError] = useState('');

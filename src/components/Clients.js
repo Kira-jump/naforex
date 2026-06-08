@@ -518,11 +518,6 @@ const Clients = () => {
   );
 };
 
-const getStatutInfo = (statut) => {
-  if (statut === 'rouge') return { color: '#ef4444', bg: '#ef444415', border: '#ef444430', label: 'Zone Rouge', Icon: WifiOff };
-  if (statut === 'warning') return { color: '#f59e0b', bg: '#f59e0b15', border: '#f59e0b30', label: 'Bientôt', Icon: AlertTriangle };
-  return { color: '#10b981', bg: '#10b98115', border: '#10b98130', label: 'Actif', Icon: Wifi };
-};
 
 const labelStyle = { color: '#8888aa', fontSize: '0.72rem', display: 'block', marginBottom: '5px', letterSpacing: '0.05em' };
 const inputWrap = { display: 'flex', alignItems: 'center', gap: '8px', background: '#0a0a0f', border: '1px solid #2a2a3a', borderRadius: '10px', padding: '9px 12px' };
