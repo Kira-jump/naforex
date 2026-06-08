@@ -1,0 +1,191 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+const AppContext = createContext();
+export const useApp = () => useContext(AppContext);
+
+const STORAGE_KEY = 'naforex_data';
+const AUTH_KEY = 'naforex_auth';
+const SESSION_KEY = 'naforex_session';
+
+const defaultData = { comptes: [], clients: [], resetBase: [] };
+
+export const AppProvider = ({ children }) => {
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [data, setData] = useState(defaultData);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const auth = localStorage.getItem(AUTH_KEY);
+    if (auth) {
+      const parsed = JSON.parse(auth);
+      setUsers(parsed.users || []);
+      setIsConfigured(parsed.configured || false);
+    }
+    const session = sessionStorage.getItem(SESSION_KEY);
+    if (session) {
+      const parsed = JSON.parse(session);
+      setIsLoggedIn(true);
+      setCurrentUser(parsed.user);
+    }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) setData(JSON.parse(saved));
+    setLoading(false);
+  }, []);
+
+  const saveData = (newData) => {
+    setData(newData);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+  };
+
+  const setupUsers = (user1, user2) => {
+    const newUsers = [
+      { id: 1, username: user1.username, password: user1.password },
+      { id: 2, username: user2.username, password: user2.password },
+    ];
+    setUsers(newUsers);
+    setIsConfigured(true);
+    localStorage.setItem(AUTH_KEY, JSON.stringify({ users: newUsers, configured: true }));
+  };
+
+  const login = (username, password) => {
+    const user = users.find(u => u.username === username && u.password === password);
+    if (user) {
+      setIsLoggedIn(true);
+      setCurrentUser(user);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user }));
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    sessionStorage.removeItem(SESSION_KEY);
+  };
+
+  const updateUser = (id, newUsername, newPassword) => {
+    const updated = users.map(u => u.id === id ? { ...u, username: newUsername, password: newPassword } : u);
+    setUsers(updated);
+    localStorage.setItem(AUTH_KEY, JSON.stringify({ users: updated, configured: true }));
+    if (currentUser?.id === id) {
+      const updatedUser = { ...currentUser, username: newUsername, password: newPassword };
+      setCurrentUser(updatedUser);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user: updatedUser }));
+    }
+  };
+
+  // COMPTES
+  const addCompte = (compte) => {
+    const newCompte = { ...compte, id: Date.now().toString() };
+    saveData({ ...data, comptes: [...data.comptes, newCompte] });
+  };
+
+  const updateCompte = (id, updates) => {
+    saveData({ ...data, comptes: data.comptes.map(c => c.id === id ? { ...c, ...updates } : c) });
+  };
+
+  const deleteCompte = (id) => {
+    saveData({ ...data, comptes: data.comptes.filter(c => c.id !== id) });
+  };
+
+  // CLIENTS - structure multi-services
+  // client = { id, nom, whatsapp, services: [ { service, compteId, dateExpiration, prix } ] }
+  const addClient = (client) => {
+    const newClient = { ...client, id: Date.now().toString() };
+    saveData({ ...data, clients: [...data.clients, newClient] });
+  };
+
+  const updateClient = (id, updates) => {
+    saveData({ ...data, clients: data.clients.map(c => c.id === id ? { ...c, ...updates } : c) });
+  };
+
+  const transfererClient = (clientId, serviceIndex, newCompteId) => {
+    const updated = data.clients.map(c => {
+      if (c.id !== clientId) return c;
+      const newServices = c.services.map((s, i) =>
+        i === serviceIndex ? { ...s, compteId: newCompteId } : s
+      );
+      return { ...c, services: newServices };
+    });
+    saveData({ ...data, clients: updated });
+  };
+
+  const resetClient = (clientId) => {
+    const client = data.clients.find(c => c.id === clientId);
+    if (!client) return;
+    saveData({
+      ...data,
+      clients: data.clients.filter(c => c.id !== clientId),
+      resetBase: [...data.resetBase, { ...client, resetDate: new Date().toISOString() }],
+    });
+  };
+
+  const restoreClient = (clientId) => {
+    const client = data.resetBase.find(c => c.id === clientId);
+    if (!client) return;
+    const { resetDate, ...restored } = client;
+    saveData({
+      ...data,
+      clients: [...data.clients, restored],
+      resetBase: data.resetBase.filter(c => c.id !== clientId),
+    });
+  };
+
+  const deleteDefinitif = (clientId) => {
+    saveData({ ...data, resetBase: data.resetBase.filter(c => c.id !== clientId) });
+  };
+
+  // HELPERS
+  const getJoursRestants = (dateExpiration) => {
+    const diff = Math.ceil((new Date(dateExpiration) - new Date()) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+
+  const getStatutService = (dateExpiration) => {
+    const jours = getJoursRestants(dateExpiration);
+    if (jours < 0) return 'rouge';
+    if (jours <= 5) return 'warning';
+    return 'actif';
+  };
+
+  const getStatutClient = (client) => {
+    if (!client.services || client.services.length === 0) return 'actif';
+    const statuts = client.services.map(s => getStatutService(s.dateExpiration));
+    if (statuts.includes('rouge')) return 'rouge';
+    if (statuts.includes('warning')) return 'warning';
+    return 'actif';
+  };
+
+  const getStatutCompte = (compte) => {
+    const jours = getJoursRestants(compte.dateReabonnement);
+    if (jours < 0) return 'rouge';
+    if (jours <= 5) return 'warning';
+    return 'actif';
+  };
+
+  const getSeatsInfo = (compteId, service) => {
+    const maxSeats = service === 'netflix' ? 5 : 6;
+    const used = data.clients.filter(c =>
+      c.services && c.services.some(s => s.compteId === compteId)
+    ).length;
+    return { used, max: maxSeats, available: maxSeats - used };
+  };
+
+  return (
+    <AppContext.Provider value={{
+      isConfigured, isLoggedIn, currentUser, users,
+      data, loading,
+      setupUsers, login, logout, updateUser,
+      addCompte, updateCompte, deleteCompte,
+      addClient, updateClient, transfererClient,
+      resetClient, restoreClient, deleteDefinitif,
+      getJoursRestants, getStatutService, getStatutClient, getStatutCompte, getSeatsInfo,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
