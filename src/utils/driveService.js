@@ -55,7 +55,7 @@ export const signOutDrive = () => {
 };
 
 const getHeaders = () => ({
-  Authorization: `Bearer ${accessToken}`,
+  Authorization: 'Bearer ' + accessToken,
   'Content-Type': 'application/json',
 });
 
@@ -64,7 +64,7 @@ export const findOrCreateFile = async () => {
   if (fileId) return fileId;
 
   const search = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}'+and+trashed=false&fields=files(id,name)`,
+    "https://www.googleapis.com/drive/v3/files?q=name='" + FILE_NAME + "'+and+trashed=false&fields=files(id,name)",
     { headers: getHeaders() }
   );
   const result = await search.json();
@@ -93,10 +93,10 @@ export const saveDataToDrive = async (data) => {
   try {
     const fileId = await findOrCreateFile();
     await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+      'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media',
       {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       }
     );
@@ -112,7 +112,7 @@ export const loadDataFromDrive = async () => {
   try {
     const fileId = await findOrCreateFile();
     const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media',
       { headers: getHeaders() }
     );
     if (!res.ok) return null;
