@@ -1,4 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  initGoogleDrive, signInDrive, signOutDrive,
+  isSignedIn, saveDataToDrive, loadDataFromDrive
+} from '../utils/driveService';
 
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
@@ -16,28 +20,81 @@ export const AppProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [data, setData] = useState(defaultData);
   const [loading, setLoading] = useState(true);
+  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveSyncing, setDriveSyncing] = useState(false);
 
   useEffect(() => {
-    const auth = localStorage.getItem(AUTH_KEY);
-    if (auth) {
-      const parsed = JSON.parse(auth);
-      setUsers(parsed.users || []);
-      setIsConfigured(parsed.configured || false);
-    }
-    const session = sessionStorage.getItem(SESSION_KEY);
-    if (session) {
-      const parsed = JSON.parse(session);
-      setIsLoggedIn(true);
-      setCurrentUser(parsed.user);
-    }
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setData(JSON.parse(saved));
-    setLoading(false);
+    const init = async () => {
+      const auth = localStorage.getItem(AUTH_KEY);
+      if (auth) {
+        const parsed = JSON.parse(auth);
+        setUsers(parsed.users || []);
+        setIsConfigured(parsed.configured || false);
+      }
+      const session = sessionStorage.getItem(SESSION_KEY);
+      if (session) {
+        const parsed = JSON.parse(session);
+        setIsLoggedIn(true);
+        setCurrentUser(parsed.user);
+      }
+      await initGoogleDrive();
+      if (isSignedIn()) {
+        setDriveConnected(true);
+        const driveData = await loadDataFromDrive();
+        if (driveData) {
+          setData(driveData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(driveData));
+        } else {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) setData(JSON.parse(saved));
+        }
+      } else {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setData(JSON.parse(saved));
+      }
+      setLoading(false);
+    };
+    init();
   }, []);
 
-  const saveData = (newData) => {
+  const saveData = async (newData) => {
     setData(newData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+    if (driveConnected) {
+      setDriveSyncing(true);
+      await saveDataToDrive(newData);
+      setDriveSyncing(false);
+    }
+  };
+
+  const connectDrive = async () => {
+    try {
+      await signInDrive();
+      setDriveConnected(true);
+      setDriveSyncing(true);
+      await saveDataToDrive(data);
+      setDriveSyncing(false);
+      return true;
+    } catch (e) {
+      console.error('Drive connect error:', e);
+      return false;
+    }
+  };
+
+  const disconnectDrive = () => {
+    signOutDrive();
+    setDriveConnected(false);
+  };
+
+  const syncFromDrive = async () => {
+    if (!driveConnected) return;
+    setDriveSyncing(true);
+    const driveData = await loadDataFromDrive();
+    if (driveData) {
+      setData(driveData);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(driveData));
+    }
+    setDriveSyncing(false);
   };
 
   const setupUsers = (user1, user2) => {
@@ -78,7 +135,6 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // COMPTES
   const addCompte = (compte) => {
     const newCompte = { ...compte, id: Date.now().toString() };
     saveData({ ...data, comptes: [...data.comptes, newCompte] });
@@ -92,8 +148,6 @@ export const AppProvider = ({ children }) => {
     saveData({ ...data, comptes: data.comptes.filter(c => c.id !== id) });
   };
 
-  // CLIENTS - structure multi-services
-  // client = { id, nom, whatsapp, services: [ { service, compteId, dateExpiration, prix } ] }
   const addClient = (client) => {
     const newClient = { ...client, id: Date.now().toString() };
     saveData({ ...data, clients: [...data.clients, newClient] });
@@ -139,10 +193,8 @@ export const AppProvider = ({ children }) => {
     saveData({ ...data, resetBase: data.resetBase.filter(c => c.id !== clientId) });
   };
 
-  // HELPERS
   const getJoursRestants = (dateExpiration) => {
-    const diff = Math.ceil((new Date(dateExpiration) - new Date()) / (1000 * 60 * 60 * 24));
-    return diff;
+    return Math.ceil((new Date(dateExpiration) - new Date()) / (1000 * 60 * 60 * 24));
   };
 
   const getStatutService = (dateExpiration) => {
@@ -178,8 +230,9 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       isConfigured, isLoggedIn, currentUser, users,
-      data, loading,
+      data, loading, driveConnected, driveSyncing,
       setupUsers, login, logout, updateUser,
+      connectDrive, disconnectDrive, syncFromDrive,
       addCompte, updateCompte, deleteCompte,
       addClient, updateClient, transfererClient,
       resetClient, restoreClient, deleteDefinitif,
