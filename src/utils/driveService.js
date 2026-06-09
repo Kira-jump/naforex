@@ -1,5 +1,5 @@
 const CLIENT_ID = '463898797761-tjbqdv1bkd556osh5gfpjhe814k37n22.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file'\;
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const FILE_NAME = 'naforex_data.json';
 
 let tokenClient = null;
