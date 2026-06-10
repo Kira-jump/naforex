@@ -42,7 +42,7 @@ const Setup = () => {
             padding: '12px 24px',
             marginBottom: '16px'
           }}>
-            <span style={{ fontSize: '1.8rem', fontWeight: '800', color: '#fff', letterSpacing: '0.1em' }}>
+            <img src="/logo.svg" alt="NaforeX" style={{ width: "28px", height: "28px", marginRight: "8px" }} /><span style={{ fontSize: "1.8rem", fontWeight: "800", color: "#fff", letterSpacing: "0.1em" }}>
               NaforeX
             </span>
           </div>

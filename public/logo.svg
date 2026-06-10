@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Hexagone externe -->
+  <polygon points="50,8 86,29 86,71 50,92 14,71 14,29"
+    fill="none" stroke="url(#hexGrad)" stroke-width="2" filter="url(#glow)" opacity="0.9"/>
+  <!-- Hexagone interne -->
+  <polygon points="50,22 72,35 72,65 50,78 28,65 28,35"
+    fill="none" stroke="url(#hexGrad)" stroke-width="1.5" opacity="0.6"/>
+  <!-- Diamant -->
+  <polygon points="50,32 62,50 50,68 38,50"
+    fill="none" stroke="url(#hexGrad)" stroke-width="1.5" opacity="0.8"/>
+  <!-- Point central -->
+  <circle cx="50" cy="50" r="5" fill="url(#hexGrad)" filter="url(#glow)"/>
+  <!-- Points de connexion -->
+  <circle cx="50" cy="8" r="2" fill="#00d4ff" opacity="0.8"/>
+  <circle cx="86" cy="29" r="2" fill="#00d4ff" opacity="0.8"/>
+  <circle cx="86" cy="71" r="2" fill="#00d4ff" opacity="0.8"/>
+  <circle cx="50" cy="92" r="2" fill="#00d4ff" opacity="0.8"/>
+  <circle cx="14" cy="71" r="2" fill="#00d4ff" opacity="0.8"/>
+  <circle cx="14" cy="29" r="2" fill="#00d4ff" opacity="0.8"/>
+</svg>

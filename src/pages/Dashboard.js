@@ -38,7 +38,7 @@ const Dashboard = () => {
             background: 'linear-gradient(135deg, #7c3aed, #9d5ff0)',
             borderRadius: '10px', padding: '5px 14px',
           }}>
-            <span style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', letterSpacing: '0.1em' }}>
+            <img src="/logo.svg" alt="NaforeX" style={{ width: "22px", height: "22px", marginRight: "6px" }} /><span style={{ fontSize: "1.05rem", fontWeight: "800", color: "#fff", letterSpacing: "0.1em" }}>
               NaforeX
             </span>
           </div>

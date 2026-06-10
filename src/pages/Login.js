@@ -63,7 +63,7 @@ const Login = () => {
             padding: '12px 28px',
             marginBottom: '12px',
           }}>
-            <span style={{ fontSize: '2rem', fontWeight: '800', color: '#fff', letterSpacing: '0.1em' }}>
+            <img src="/logo.svg" alt="NaforeX" style={{ width: "32px", height: "32px", marginRight: "10px" }} /><span style={{ fontSize: "2rem", fontWeight: "800", color: "#fff", letterSpacing: "0.1em" }}>
               NaforeX
             </span>
           </div>
