@@ -3,6 +3,11 @@ import {
   initGoogleDrive, signInDrive, signOutDrive,
   isSignedIn, saveDataToDrive, loadDataFromDrive
 } from '../utils/driveService';
+import {
+  requestNotificationPermission,
+  checkBrowserNotifications,
+  scheduleEmailAt1230
+} from '../utils/notificationService';
 
 const AppContext = createContext();
 export const useApp = () => useContext(AppContext);
@@ -38,19 +43,26 @@ export const AppProvider = ({ children }) => {
         setCurrentUser(parsed.user);
       }
       await initGoogleDrive();
+      let loadedData = null;
       if (isSignedIn()) {
         setDriveConnected(true);
-        const driveData = await loadDataFromDrive();
-        if (driveData) {
-          setData(driveData);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(driveData));
-        } else {
-          const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) setData(JSON.parse(saved));
+        loadedData = await loadDataFromDrive();
+        if (loadedData) {
+          setData(loadedData);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(loadedData));
         }
-      } else {
+      }
+      if (!loadedData) {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) setData(JSON.parse(saved));
+        if (saved) {
+          loadedData = JSON.parse(saved);
+          setData(loadedData);
+        }
+      }
+      if (loadedData) {
+        await requestNotificationPermission();
+        checkBrowserNotifications(loadedData);
+        scheduleEmailAt1230(loadedData);
       }
       setLoading(false);
     };
