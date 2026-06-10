@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   initGoogleDrive, signInDrive, signOutDrive,
-  isSignedIn, saveDataToDrive, loadDataFromDrive
+  isSignedIn, saveDataToDrive, loadDataFromDrive,
+  saveAuthToDrive, loadAuthFromDrive
 } from '../utils/driveService';
 import {
   requestNotificationPermission,
@@ -30,40 +31,52 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const init = async () => {
-      const auth = localStorage.getItem(AUTH_KEY);
-      if (auth) {
-        const parsed = JSON.parse(auth);
-        setUsers(parsed.users || []);
-        setIsConfigured(parsed.configured || false);
+      await initGoogleDrive();
+
+      let authData = null;
+      let appData = null;
+
+      if (isSignedIn()) {
+        setDriveConnected(true);
+        authData = await loadAuthFromDrive();
+        if (authData) {
+          localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+        }
+        appData = await loadDataFromDrive();
+        if (appData) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        }
       }
+
+      if (!authData) {
+        const saved = localStorage.getItem(AUTH_KEY);
+        if (saved) authData = JSON.parse(saved);
+      }
+
+      if (!appData) {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) appData = JSON.parse(saved);
+      }
+
+      if (authData) {
+        setUsers(authData.users || []);
+        setIsConfigured(authData.configured || false);
+      }
+
+      if (appData) {
+        setData(appData);
+        await requestNotificationPermission();
+        checkBrowserNotifications(appData);
+        scheduleEmailAt1230(appData);
+      }
+
       const session = sessionStorage.getItem(SESSION_KEY);
       if (session) {
         const parsed = JSON.parse(session);
         setIsLoggedIn(true);
         setCurrentUser(parsed.user);
       }
-      await initGoogleDrive();
-      let loadedData = null;
-      if (isSignedIn()) {
-        setDriveConnected(true);
-        loadedData = await loadDataFromDrive();
-        if (loadedData) {
-          setData(loadedData);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(loadedData));
-        }
-      }
-      if (!loadedData) {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          loadedData = JSON.parse(saved);
-          setData(loadedData);
-        }
-      }
-      if (loadedData) {
-        await requestNotificationPermission();
-        checkBrowserNotifications(loadedData);
-        scheduleEmailAt1230(loadedData);
-      }
+
       setLoading(false);
     };
     init();
@@ -79,11 +92,20 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const saveAuth = async (authData) => {
+    localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+    if (driveConnected) {
+      await saveAuthToDrive(authData);
+    }
+  };
+
   const connectDrive = async () => {
     try {
       await signInDrive();
       setDriveConnected(true);
       setDriveSyncing(true);
+      const auth = localStorage.getItem(AUTH_KEY);
+      if (auth) await saveAuthToDrive(JSON.parse(auth));
       await saveDataToDrive(data);
       setDriveSyncing(false);
       return true;
@@ -101,6 +123,12 @@ export const AppProvider = ({ children }) => {
   const syncFromDrive = async () => {
     if (!driveConnected) return;
     setDriveSyncing(true);
+    const authData = await loadAuthFromDrive();
+    if (authData) {
+      setUsers(authData.users || []);
+      setIsConfigured(authData.configured || false);
+      localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+    }
     const driveData = await loadDataFromDrive();
     if (driveData) {
       setData(driveData);
@@ -109,14 +137,15 @@ export const AppProvider = ({ children }) => {
     setDriveSyncing(false);
   };
 
-  const setupUsers = (user1, user2) => {
+  const setupUsers = async (user1, user2) => {
     const newUsers = [
       { id: 1, username: user1.username, password: user1.password },
       { id: 2, username: user2.username, password: user2.password },
     ];
+    const authData = { users: newUsers, configured: true };
     setUsers(newUsers);
     setIsConfigured(true);
-    localStorage.setItem(AUTH_KEY, JSON.stringify({ users: newUsers, configured: true }));
+    await saveAuth(authData);
   };
 
   const login = (username, password) => {
@@ -136,10 +165,11 @@ export const AppProvider = ({ children }) => {
     sessionStorage.removeItem(SESSION_KEY);
   };
 
-  const updateUser = (id, newUsername, newPassword) => {
+  const updateUser = async (id, newUsername, newPassword) => {
     const updated = users.map(u => u.id === id ? { ...u, username: newUsername, password: newPassword } : u);
     setUsers(updated);
-    localStorage.setItem(AUTH_KEY, JSON.stringify({ users: updated, configured: true }));
+    const authData = { users: updated, configured: true };
+    await saveAuth(authData);
     if (currentUser?.id === id) {
       const updatedUser = { ...currentUser, username: newUsername, password: newPassword };
       setCurrentUser(updatedUser);

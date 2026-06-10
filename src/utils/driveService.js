@@ -1,6 +1,7 @@
 const CLIENT_ID = '463898797761-tjbqdv1bkd556osh5gfpjhe814k37n22.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-const FILE_NAME = 'naforex_data.json';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file'\;
+const DATA_FILE = 'naforex_data.json';
+const AUTH_FILE = 'naforex_auth.json';
 const TOKEN_DURATION = 55 * 60 * 1000;
 
 let tokenClient = null;
@@ -10,7 +11,7 @@ let tokenExpiry = null;
 export const initGoogleDrive = () => {
   return new Promise((resolve) => {
     const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
+    script.src = 'https://accounts.google.com/gsi/client'\;
     script.onload = () => {
       tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
@@ -103,7 +104,8 @@ export const signOutDrive = () => {
   tokenExpiry = null;
   localStorage.removeItem('naforex_drive_token');
   localStorage.removeItem('naforex_drive_expiry');
-  localStorage.removeItem('naforex_drive_file_id');
+  localStorage.removeItem('naforex_drive_data_id');
+  localStorage.removeItem('naforex_drive_auth_id');
 };
 
 const getHeaders = () => ({
@@ -111,19 +113,17 @@ const getHeaders = () => ({
   'Content-Type': 'application/json',
 });
 
-export const findOrCreateFile = async () => {
-  const fileId = localStorage.getItem('naforex_drive_file_id');
-  if (fileId) return fileId;
+const findOrCreateFileByName = async (fileName, cacheKey) => {
   try {
     const search = await fetch(
-      "https://www.googleapis.com/drive/v3/files?q=name='" + FILE_NAME + "'+and+trashed=false&fields=files(id,name)",
+      "https://www.googleapis.com/drive/v3/files?q=name='" + fileName + "'+and+trashed=false&fields=files(id,name)",
       { headers: getHeaders() }
     );
     if (!search.ok) return null;
     const result = await search.json();
     if (result.files && result.files.length > 0) {
       const id = result.files[0].id;
-      localStorage.setItem('naforex_drive_file_id', id);
+      localStorage.setItem(cacheKey, id);
       return id;
     }
     const create = await fetch(
@@ -131,12 +131,12 @@ export const findOrCreateFile = async () => {
       {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ name: FILE_NAME, mimeType: 'application/json' }),
+        body: JSON.stringify({ name: fileName, mimeType: 'application/json' }),
       }
     );
     if (!create.ok) return null;
     const file = await create.json();
-    localStorage.setItem('naforex_drive_file_id', file.id);
+    localStorage.setItem(cacheKey, file.id);
     return file.id;
   } catch (e) {
     console.error('findOrCreateFile error:', e);
@@ -144,11 +144,11 @@ export const findOrCreateFile = async () => {
   }
 };
 
-export const saveDataToDrive = async (data) => {
+const saveFileToDrive = async (fileName, cacheKey, data) => {
   try {
     const valid = await ensureValidToken();
     if (!valid) return false;
-    const fileId = await findOrCreateFile();
+    const fileId = await findOrCreateFileByName(fileName, cacheKey);
     if (!fileId) return false;
     const res = await fetch(
       'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media',
@@ -177,21 +177,34 @@ export const saveDataToDrive = async (data) => {
   }
 };
 
-export const loadDataFromDrive = async () => {
+const loadFileFromDrive = async (fileName, cacheKey) => {
   try {
     const valid = await ensureValidToken();
     if (!valid) return null;
-    const fileId = await findOrCreateFile();
+    const fileId = await findOrCreateFileByName(fileName, cacheKey);
     if (!fileId) return null;
     const res = await fetch(
       'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media',
       { headers: getHeaders() }
     );
     if (!res.ok) return null;
-    const data = await res.json();
-    return data;
+    const text = await res.text();
+    if (!text || text.trim() === '') return null;
+    return JSON.parse(text);
   } catch (e) {
     console.error('Drive load error:', e);
     return null;
   }
 };
+
+export const saveDataToDrive = (data) =>
+  saveFileToDrive(DATA_FILE, 'naforex_drive_data_id', data);
+
+export const loadDataFromDrive = () =>
+  loadFileFromDrive(DATA_FILE, 'naforex_drive_data_id');
+
+export const saveAuthToDrive = (auth) =>
+  saveFileToDrive(AUTH_FILE, 'naforex_drive_auth_id', auth);
+
+export const loadAuthFromDrive = () =>
+  loadFileFromDrive(AUTH_FILE, 'naforex_drive_auth_id');
