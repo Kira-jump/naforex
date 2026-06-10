@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { User, Lock, CloudIcon, RefreshCw, LogOut, Save, Cloud, CloudOff } from 'lucide-react';
+import { User, Lock, RefreshCw, LogOut, Save, Cloud, CloudOff } from 'lucide-react';
 
 const Parametres = () => {
   const { users, currentUser, updateUser, logout, driveConnected, driveSyncing, connectDrive, disconnectDrive, syncFromDrive } = useApp();
