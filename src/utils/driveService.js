@@ -8,7 +8,7 @@ let accessToken = null;
 export const initGoogleDrive = () => {
   return new Promise((resolve) => {
     const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client'\;
+    script.src = 'https://accounts.google.com/gsi/client';
     script.onload = () => {
       tokenClient = window.google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
