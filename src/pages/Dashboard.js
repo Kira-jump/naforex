@@ -23,9 +23,9 @@ const Dashboard = () => {
 
       {/* Header */}
       <div style={{
-        background: '#16161f',
+        background: 'rgba(22, 22, 31, 1)',
         borderBottom: '1px solid #2a2a3a',
-        position: 'sticky', top: 0, zIndex: 1000,
+        position: 'sticky', top: 0, zIndex: 1000, willChange: 'transform',
       }}>
         <div style={{
           maxWidth: '900px', margin: '0 auto',
