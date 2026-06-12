@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { User, Lock, RefreshCw, LogOut, Save, Cloud, CloudOff } from 'lucide-react';
+import { User, Lock, RefreshCw, LogOut, Save, Cloud } from 'lucide-react';
 
 const Parametres = () => {
-  const { users, currentUser, updateUser, logout, driveConnected, driveSyncing, connectDrive, disconnectDrive, syncFromDrive } = useApp();
+  const { users, currentUser, updateUser, logout, syncing, syncFromFirebase } = useApp();
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState({ username: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [driveLoading, setDriveLoading] = useState(false);
 
   const handleEdit = (user) => {
     setEditId(user.id);
@@ -29,19 +28,8 @@ const Parametres = () => {
     setTimeout(() => setSuccess(''), 3000);
   };
 
-  const handleConnectDrive = async () => {
-    setDriveLoading(true);
-    const ok = await connectDrive();
-    setDriveLoading(false);
-    if (ok) setSuccess('Google Drive connecté !');
-    else setError('Erreur de connexion Drive');
-    setTimeout(() => { setSuccess(''); setError(''); }, 3000);
-  };
-
   const handleSync = async () => {
-    setDriveLoading(true);
-    await syncFromDrive();
-    setDriveLoading(false);
+    await syncFromFirebase();
     setSuccess('Données synchronisées !');
     setTimeout(() => setSuccess(''), 3000);
   };
@@ -73,87 +61,52 @@ const Parametres = () => {
         </div>
       )}
 
-      {/* Google Drive */}
+      {/* Firebase Sync */}
       <div style={{
         background: '#16161f', border: '1px solid #2a2a3a',
         borderRadius: '16px', padding: '20px', marginBottom: '16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          {driveConnected
-            ? <Cloud size={18} color="#10b981" />
-            : <CloudOff size={18} color="#555570" />
-          }
+          <Cloud size={18} color="#f97316" />
           <h3 style={{ color: '#fff', fontSize: '1rem', fontWeight: '700' }}>
-            Google Drive Sync
+            Firebase Sync
           </h3>
-          {driveSyncing && (
-            <span style={{ color: '#7c3aed', fontSize: '0.75rem', marginLeft: 'auto' }}>
+          {syncing && (
+            <span style={{ color: '#f97316', fontSize: '0.75rem', marginLeft: 'auto' }}>
               Synchronisation...
             </span>
           )}
         </div>
 
-        {/* Statut */}
         <div style={{
-          background: driveConnected ? '#10b98115' : '#2a2a3a',
-          border: `1px solid ${driveConnected ? '#10b98130' : '#3a3a4a'}`,
+          background: '#10b98115', border: '1px solid #10b98130',
           borderRadius: '10px', padding: '12px 16px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           marginBottom: '14px',
         }}>
           <div>
-            <div style={{ color: driveConnected ? '#10b981' : '#8888aa', fontWeight: '600', fontSize: '0.85rem' }}>
-              {driveConnected ? 'Connecté' : 'Non connecté'}
+            <div style={{ color: '#10b981', fontWeight: '600', fontSize: '0.85rem' }}>
+              ✅ Connecté
             </div>
             <div style={{ color: '#555570', fontSize: '0.75rem', marginTop: '2px' }}>
-              {driveConnected
-                ? 'Les données se synchronisent automatiquement'
-                : 'Connecte Drive pour partager les données entre les 2 utilisateurs'
-              }
+              Les données se synchronisent automatiquement
             </div>
           </div>
-          <div style={{
-            width: '10px', height: '10px', borderRadius: '50%',
-            background: driveConnected ? '#10b981' : '#555570',
-          }} />
+          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }} />
         </div>
 
-        {/* Boutons */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          {!driveConnected ? (
-            <button onClick={handleConnectDrive} disabled={driveLoading} style={{
-              ...btnPrimary,
-              opacity: driveLoading ? 0.7 : 1,
-            }}>
-              <Cloud size={15} />
-              {driveLoading ? 'Connexion...' : 'Connecter Drive'}
-            </button>
-          ) : (
-            <>
-              <button onClick={handleSync} disabled={driveLoading || driveSyncing} style={{
-                ...btnSecondary,
-                display: 'flex', alignItems: 'center', gap: '6px',
-                opacity: driveLoading ? 0.7 : 1,
-              }}>
-                <RefreshCw size={14} />
-                {driveLoading ? 'Sync...' : 'Synchroniser'}
-              </button>
-              <button onClick={disconnectDrive} style={{
-                ...btnDanger,
-                display: 'flex', alignItems: 'center', gap: '6px',
-              }}>
-                <CloudOff size={14} />
-                Déconnecter
-              </button>
-            </>
-          )}
-        </div>
+        <button onClick={handleSync} disabled={syncing} style={{
+          ...btnSecondary,
+          display: 'flex', alignItems: 'center', gap: '6px',
+          opacity: syncing ? 0.7 : 1,
+        }}>
+          <RefreshCw size={14} />
+          {syncing ? 'Sync...' : 'Synchroniser maintenant'}
+        </button>
 
-        {driveConnected && (
-          <p style={{ color: '#555570', fontSize: '0.72rem', marginTop: '12px' }}>
-            💡 Les 2 utilisateurs doivent se connecter avec le même compte Google pour partager les données.
-          </p>
-        )}
+        <p style={{ color: '#555570', fontSize: '0.72rem', marginTop: '12px' }}>
+          💡 Les 2 utilisateurs partagent automatiquement les mêmes données via Firebase.
+        </p>
       </div>
 
       {/* Utilisateurs */}
@@ -247,19 +200,19 @@ const Parametres = () => {
         </div>
       </div>
 
-      {/* À propos */}
+      {/* A propos */}
       <div style={{
         background: '#16161f', border: '1px solid #2a2a3a',
         borderRadius: '16px', padding: '20px', marginBottom: '16px',
       }}>
         <h3 style={{ color: '#fff', fontSize: '1rem', fontWeight: '700', marginBottom: '14px' }}>
-          À propos
+          A propos
         </h3>
         {[
           { label: 'Application', value: 'NaforeX Streaming Manager' },
-          { label: 'Version', value: '1.1.0' },
+          { label: 'Version', value: '2.0.0' },
           { label: 'Services', value: 'Netflix · Spotify · Prime' },
-          { label: 'Drive Sync', value: driveConnected ? '✅ Actif' : '❌ Inactif' },
+          { label: 'Base de donnees', value: '🔥 Firebase' },
         ].map(item => (
           <div key={item.label} style={{
             display: 'flex', justifyContent: 'space-between',
@@ -271,7 +224,7 @@ const Parametres = () => {
         ))}
       </div>
 
-      {/* Déconnexion */}
+      {/* Deconnexion */}
       <button onClick={logout} style={{
         width: '100%', background: '#ef444418',
         border: '1px solid #ef444440', borderRadius: '12px',
@@ -280,7 +233,7 @@ const Parametres = () => {
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
       }}>
         <LogOut size={16} />
-        Se déconnecter
+        Se deconnecter
       </button>
     </div>
   );
@@ -291,6 +244,5 @@ const inputWrap = { display: 'flex', alignItems: 'center', gap: '8px', backgroun
 const inputInner = { flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: '0.88rem', outline: 'none', fontFamily: "'Syne', sans-serif", minWidth: 0 };
 const btnPrimary = { background: 'linear-gradient(135deg, #7c3aed, #9d5ff0)', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#fff', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', fontFamily: "'Syne', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' };
 const btnSecondary = { background: '#2a2a3a', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#8888aa', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', fontFamily: "'Syne', sans-serif" };
-const btnDanger = { background: '#ef444418', border: '1px solid #ef444430', borderRadius: '10px', padding: '9px 16px', color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', fontFamily: "'Syne', sans-serif" };
 
 export default Parametres;

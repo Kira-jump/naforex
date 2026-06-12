@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
-  initGoogleDrive, signInDrive, signOutDrive,
-  isSignedIn, saveDataToDrive, loadDataFromDrive,
-  saveAuthToDrive, loadAuthFromDrive
-} from '../utils/driveService';
+  saveDataToFirebase, loadDataFromFirebase,
+  saveAuthToFirebase, loadAuthFromFirebase
+} from '../utils/firebaseService';
 import {
   requestNotificationPermission,
   checkBrowserNotifications,
@@ -26,48 +25,50 @@ export const AppProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [data, setData] = useState(defaultData);
   const [loading, setLoading] = useState(true);
-  const [driveConnected, setDriveConnected] = useState(false);
-  const [driveSyncing, setDriveSyncing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const init = async () => {
-      await initGoogleDrive();
-
-      let authData = null;
-      let appData = null;
-
-      if (isSignedIn()) {
-        setDriveConnected(true);
-        authData = await loadAuthFromDrive();
+      setSyncing(true);
+      try {
+        const authData = await loadAuthFromFirebase();
         if (authData) {
+          setUsers(authData.users || []);
+          setIsConfigured(authData.configured || false);
           localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+        } else {
+          const saved = localStorage.getItem(AUTH_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setUsers(parsed.users || []);
+            setIsConfigured(parsed.configured || false);
+          }
         }
-        appData = await loadDataFromDrive();
+
+        const appData = await loadDataFromFirebase();
         if (appData) {
+          setData(appData);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+          await requestNotificationPermission();
+          checkBrowserNotifications(appData);
+          scheduleEmailAt1230(appData);
+        } else {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setData(parsed);
+          }
         }
-      }
-
-      if (!authData) {
-        const saved = localStorage.getItem(AUTH_KEY);
-        if (saved) authData = JSON.parse(saved);
-      }
-
-      if (!appData) {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) appData = JSON.parse(saved);
-      }
-
-      if (authData) {
-        setUsers(authData.users || []);
-        setIsConfigured(authData.configured || false);
-      }
-
-      if (appData) {
-        setData(appData);
-        await requestNotificationPermission();
-        checkBrowserNotifications(appData);
-        scheduleEmailAt1230(appData);
+      } catch (e) {
+        console.error('Init error:', e);
+        const savedAuth = localStorage.getItem(AUTH_KEY);
+        if (savedAuth) {
+          const parsed = JSON.parse(savedAuth);
+          setUsers(parsed.users || []);
+          setIsConfigured(parsed.configured || false);
+        }
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) setData(JSON.parse(savedData));
       }
 
       const session = sessionStorage.getItem(SESSION_KEY);
@@ -77,6 +78,7 @@ export const AppProvider = ({ children }) => {
         setCurrentUser(parsed.user);
       }
 
+      setSyncing(false);
       setLoading(false);
     };
     init();
@@ -85,56 +87,34 @@ export const AppProvider = ({ children }) => {
   const saveData = async (newData) => {
     setData(newData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
-    if (driveConnected) {
-      setDriveSyncing(true);
-      await saveDataToDrive(newData);
-      setDriveSyncing(false);
-    }
+    setSyncing(true);
+    await saveDataToFirebase(newData);
+    setSyncing(false);
   };
 
   const saveAuth = async (authData) => {
     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
-    if (driveConnected) {
-      await saveAuthToDrive(authData);
-    }
+    await saveAuthToFirebase(authData);
   };
 
-  const connectDrive = async () => {
+  const syncFromFirebase = async () => {
+    setSyncing(true);
     try {
-      await signInDrive();
-      setDriveConnected(true);
-      setDriveSyncing(true);
-      const auth = localStorage.getItem(AUTH_KEY);
-      if (auth) await saveAuthToDrive(JSON.parse(auth));
-      await saveDataToDrive(data);
-      setDriveSyncing(false);
-      return true;
+      const authData = await loadAuthFromFirebase();
+      if (authData) {
+        setUsers(authData.users || []);
+        setIsConfigured(authData.configured || false);
+        localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+      }
+      const appData = await loadDataFromFirebase();
+      if (appData) {
+        setData(appData);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      }
     } catch (e) {
-      console.error('Drive connect error:', e);
-      return false;
+      console.error('Sync error:', e);
     }
-  };
-
-  const disconnectDrive = () => {
-    signOutDrive();
-    setDriveConnected(false);
-  };
-
-  const syncFromDrive = async () => {
-    if (!driveConnected) return;
-    setDriveSyncing(true);
-    const authData = await loadAuthFromDrive();
-    if (authData) {
-      setUsers(authData.users || []);
-      setIsConfigured(authData.configured || false);
-      localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
-    }
-    const driveData = await loadDataFromDrive();
-    if (driveData) {
-      setData(driveData);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(driveData));
-    }
-    setDriveSyncing(false);
+    setSyncing(false);
   };
 
   const setupUsers = async (user1, user2) => {
@@ -272,9 +252,9 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       isConfigured, isLoggedIn, currentUser, users,
-      data, loading, driveConnected, driveSyncing,
+      data, loading, syncing,
       setupUsers, login, logout, updateUser,
-      connectDrive, disconnectDrive, syncFromDrive,
+      syncFromFirebase,
       addCompte, updateCompte, deleteCompte,
       addClient, updateClient, transfererClient,
       resetClient, restoreClient, deleteDefinitif,
