@@ -104,28 +104,12 @@ const Clients = () => {
   return (
     <div style={{ paddingBottom: "40px", paddingTop: "8px" }}>
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '20px' }}>
-        {[
-          { label: 'Actifs', val: totalActifs, color: '#10b981', Icon: Wifi },
-          { label: 'Bientôt', val: totalWarning, color: '#f59e0b', Icon: AlertTriangle },
-          { label: 'Zone Rouge', val: totalRouge, color: '#ef4444', Icon: WifiOff },
-        ].map(s => (
-          <div key={s.label} style={{
-            background: '#16161f', border: `1px solid ${s.color}25`,
-            borderRadius: "12px", padding: "14px 12px", overflow: "hidden",
-            display: 'flex', flexDirection: 'column', gap: '6px',
-          }}>
-            <s.Icon size={16} color={s.color} />
-            <div style={{ fontSize: '1.7rem', fontWeight: '800', color: s.color, lineHeight: 1 }}>{s.val}</div>
-            <div style={{ color: '#555570', fontSize: '0.72rem', fontWeight: '600' }}>{s.label}</div>
-          </div>
-        ))}
       </div>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <h2 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '700' }}>
-          Clients <span style={{ color: '#555570', fontSize: '0.9rem', marginLeft: '6px' }}>({filtered.length})</span>
+        <h2 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          Clients <span style={{ color: "#555570", fontSize: "0.9rem" }}>({filtered.length})</span> <span style={{ background: "#10b98118", color: "#10b981", padding: "2px 8px", borderRadius: "20px", fontSize: "0.72rem", fontWeight: "600" }}>✅ {totalActifs}</span> <span style={{ background: "#f59e0b18", color: "#f59e0b", padding: "2px 8px", borderRadius: "20px", fontSize: "0.72rem", fontWeight: "600" }}>⚠ {totalWarning}</span> <span style={{ background: "#ef444418", color: "#ef4444", padding: "2px 8px", borderRadius: "20px", fontSize: "0.72rem", fontWeight: "600" }}>🔴 {totalRouge}</span>
         </h2>
         <button onClick={() => { setShowForm(true); setEditId(null); setForm(emptyClient); }} style={btnPrimary}>
           <Plus size={15} /><span>Ajouter</span>
