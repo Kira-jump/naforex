@@ -18,14 +18,22 @@ const Dashboard = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', fontFamily: "'Syne', sans-serif" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <div style={{
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      background: '#0a0a0f',
+      fontFamily: "'Syne', sans-serif",
+      overflow: 'hidden',
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
-      {/* Header */}
+      {/* Header fixe */}
       <div style={{
-        background: 'rgba(22, 22, 31, 1)',
+        background: '#16161f',
         borderBottom: '1px solid #2a2a3a',
-        position: 'sticky', top: 0, zIndex: 1000, willChange: 'transform',
+        flexShrink: 0,
+        zIndex: 100,
       }}>
         <div style={{
           maxWidth: '900px', margin: '0 auto',
@@ -37,8 +45,10 @@ const Dashboard = () => {
           <div style={{
             background: 'linear-gradient(135deg, #7c3aed, #9d5ff0)',
             borderRadius: '10px', padding: '5px 14px',
+            display: 'flex', alignItems: 'center', gap: '8px',
           }}>
-            <img src="/logo.svg" alt="NaforeX" style={{ width: "22px", height: "22px", marginRight: "6px" }} /><span style={{ fontSize: "1.05rem", fontWeight: "800", color: "#fff", letterSpacing: "0.1em" }}>
+            <img src="/logo.svg" alt="NaforeX" style={{ width: '20px', height: '20px' }} />
+            <span style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', letterSpacing: '0.1em' }}>
               NaforeX
             </span>
           </div>
@@ -82,9 +92,9 @@ const Dashboard = () => {
                 style={{
                   flex: 1,
                   background: 'none', border: 'none',
-                  padding: '8px 4px',
+                  padding: '10px 8px',
                   color: active ? '#7c3aed' : '#555570',
-                  fontSize: '0.68rem', fontWeight: '600',
+                  fontSize: '0.72rem', fontWeight: '600',
                   cursor: 'pointer',
                   borderBottom: active ? '2px solid #7c3aed' : '2px solid transparent',
                   transition: 'all 0.2s',
@@ -101,12 +111,19 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "16px", overflowX: "hidden", overflowY: "auto" }}>
-        {activeTab === 'clients' && <Clients />}
-        {activeTab === 'comptes' && <Comptes />}
-        {activeTab === 'reset' && <ResetBase />}
-        {activeTab === 'params' && <Parametres />}
+      {/* Content scrollable */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '16px' }}>
+          {activeTab === 'clients' && <Clients />}
+          {activeTab === 'comptes' && <Comptes />}
+          {activeTab === 'reset' && <ResetBase />}
+          {activeTab === 'params' && <Parametres />}
+        </div>
       </div>
     </div>
   );
