@@ -25,7 +25,7 @@ const Dashboard = () => {
       <div style={{
         background: '#16161f',
         borderBottom: '1px solid #2a2a3a',
-        position: 'sticky', top: 0, zIndex: 100,
+        position: 'sticky', top: 0, zIndex: 1000,
       }}>
         <div style={{
           maxWidth: '900px', margin: '0 auto',
@@ -102,7 +102,7 @@ const Dashboard = () => {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: "16px", overflowX: "hidden" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "16px", overflowX: "hidden", overflowY: "auto" }}>
         {activeTab === 'clients' && <Clients />}
         {activeTab === 'comptes' && <Comptes />}
         {activeTab === 'reset' && <ResetBase />}
