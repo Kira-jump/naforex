@@ -102,7 +102,7 @@ const Clients = () => {
   });
 
   return (
-    <div style={{ paddingBottom: '40px' }}>
+    <div style={{ paddingBottom: "40px", paddingTop: "8px" }}>
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '20px' }}>
         {[
@@ -112,7 +112,7 @@ const Clients = () => {
         ].map(s => (
           <div key={s.label} style={{
             background: '#16161f', border: `1px solid ${s.color}25`,
-            borderRadius: '12px', padding: '14px 12px',
+            borderRadius: "12px", padding: "14px 12px", overflow: "hidden",
             display: 'flex', flexDirection: 'column', gap: '6px',
           }}>
             <s.Icon size={16} color={s.color} />

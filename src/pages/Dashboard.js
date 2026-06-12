@@ -102,7 +102,7 @@ const Dashboard = () => {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '16px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: "16px", overflowX: "hidden" }}>
         {activeTab === 'clients' && <Clients />}
         {activeTab === 'comptes' && <Comptes />}
         {activeTab === 'reset' && <ResetBase />}
