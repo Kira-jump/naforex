@@ -103,8 +103,6 @@ const Clients = () => {
 
   return (
     <div style={{ paddingBottom: "40px", paddingTop: "8px" }}>
-      {/* Stats */}
-      </div>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
