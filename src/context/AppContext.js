@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   saveDataToFirebase, loadDataFromFirebase,
-  saveAuthToFirebase, loadAuthFromFirebase
+  saveAuthToFirebase, loadAuthFromFirebase,
+  subscribeToData
 } from '../utils/firebaseService';
 import {
   requestNotificationPermission,
@@ -16,7 +17,7 @@ const STORAGE_KEY = 'naforex_data';
 const AUTH_KEY = 'naforex_auth';
 const SESSION_KEY = 'naforex_session';
 
-const defaultData = { comptes: [], clients: [], resetBase: [] };
+const defaultData = { comptes: [], clients: [], resetBase: [], corbeilleComptes: [] };
 
 export const AppProvider = ({ children }) => {
   const [isConfigured, setIsConfigured] = useState(false);
@@ -26,6 +27,7 @@ export const AppProvider = ({ children }) => {
   const [data, setData] = useState(defaultData);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const isLocalUpdate = useRef(false);
 
   useEffect(() => {
     const init = async () => {
@@ -47,17 +49,15 @@ export const AppProvider = ({ children }) => {
 
         const appData = await loadDataFromFirebase();
         if (appData) {
-          setData(appData);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+          const merged = { ...defaultData, ...appData };
+          setData(merged);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
           await requestNotificationPermission();
-          checkBrowserNotifications(appData);
-          scheduleEmailAt1230(appData);
+          checkBrowserNotifications(merged);
+          scheduleEmailAt1230(merged);
         } else {
           const saved = localStorage.getItem(STORAGE_KEY);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            setData(parsed);
-          }
+          if (saved) setData({ ...defaultData, ...JSON.parse(saved) });
         }
       } catch (e) {
         console.error('Init error:', e);
@@ -68,7 +68,7 @@ export const AppProvider = ({ children }) => {
           setIsConfigured(parsed.configured || false);
         }
         const savedData = localStorage.getItem(STORAGE_KEY);
-        if (savedData) setData(JSON.parse(savedData));
+        if (savedData) setData({ ...defaultData, ...JSON.parse(savedData) });
       }
 
       const session = sessionStorage.getItem(SESSION_KEY);
@@ -84,37 +84,30 @@ export const AppProvider = ({ children }) => {
     init();
   }, []);
 
+  // Sync temps réel depuis Firebase
+  useEffect(() => {
+    const unsubscribe = subscribeToData((newData) => {
+      if (isLocalUpdate.current) return;
+      const merged = { ...defaultData, ...newData };
+      setData(merged);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    });
+    return () => unsubscribe();
+  }, []);
+
   const saveData = async (newData) => {
+    isLocalUpdate.current = true;
     setData(newData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
     setSyncing(true);
     await saveDataToFirebase(newData);
     setSyncing(false);
+    setTimeout(() => { isLocalUpdate.current = false; }, 1000);
   };
 
   const saveAuth = async (authData) => {
     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
     await saveAuthToFirebase(authData);
-  };
-
-  const syncFromFirebase = async () => {
-    setSyncing(true);
-    try {
-      const authData = await loadAuthFromFirebase();
-      if (authData) {
-        setUsers(authData.users || []);
-        setIsConfigured(authData.configured || false);
-        localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
-      }
-      const appData = await loadDataFromFirebase();
-      if (appData) {
-        setData(appData);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-      }
-    } catch (e) {
-      console.error('Sync error:', e);
-    }
-    setSyncing(false);
   };
 
   const setupUsers = async (user1, user2) => {
@@ -157,6 +150,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // COMPTES
   const addCompte = (compte) => {
     const newCompte = { ...compte, id: Date.now().toString() };
     saveData({ ...data, comptes: [...data.comptes, newCompte] });
@@ -167,9 +161,34 @@ export const AppProvider = ({ children }) => {
   };
 
   const deleteCompte = (id) => {
-    saveData({ ...data, comptes: data.comptes.filter(c => c.id !== id) });
+    const compte = data.comptes.find(c => c.id === id);
+    if (!compte) return;
+    saveData({
+      ...data,
+      comptes: data.comptes.filter(c => c.id !== id),
+      corbeilleComptes: [...(data.corbeilleComptes || []), { ...compte, deletedDate: new Date().toISOString() }],
+    });
   };
 
+  const restoreCompte = (id) => {
+    const compte = (data.corbeilleComptes || []).find(c => c.id === id);
+    if (!compte) return;
+    const { deletedDate, ...restored } = compte;
+    saveData({
+      ...data,
+      comptes: [...data.comptes, restored],
+      corbeilleComptes: (data.corbeilleComptes || []).filter(c => c.id !== id),
+    });
+  };
+
+  const deleteCompteDefinitif = (id) => {
+    saveData({
+      ...data,
+      corbeilleComptes: (data.corbeilleComptes || []).filter(c => c.id !== id),
+    });
+  };
+
+  // CLIENTS
   const addClient = (client) => {
     const newClient = { ...client, id: Date.now().toString() };
     saveData({ ...data, clients: [...data.clients, newClient] });
@@ -254,8 +273,7 @@ export const AppProvider = ({ children }) => {
       isConfigured, isLoggedIn, currentUser, users,
       data, loading, syncing,
       setupUsers, login, logout, updateUser,
-      syncFromFirebase,
-      addCompte, updateCompte, deleteCompte,
+      addCompte, updateCompte, deleteCompte, restoreCompte, deleteCompteDefinitif,
       addClient, updateClient, transfererClient,
       resetClient, restoreClient, deleteDefinitif,
       getJoursRestants, getStatutService, getStatutClient, getStatutCompte, getSeatsInfo,

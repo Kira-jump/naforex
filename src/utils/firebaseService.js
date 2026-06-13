@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCOZFOxp787VQCuMUMSeoVbSVrH34jOZ68',
@@ -53,4 +53,10 @@ export const loadAuthFromFirebase = async () => {
     console.error('Firebase auth load error:', e);
     return null;
   }
+};
+
+export const subscribeToData = (callback) => {
+  return onSnapshot(doc(db, 'naforex', 'data'), (snap) => {
+    if (snap.exists()) callback(snap.data());
+  });
 };
