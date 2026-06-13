@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ClientModal from "./ClientModal";
 import { useApp } from '../context/AppContext';
 import {
   Plus, Pencil, Trash2, Mail, Lock, CreditCard, User,
@@ -22,6 +23,7 @@ const Comptes = () => {
   const [filterService, setFilterService] = useState('netflix');
   const [expandedId, setExpandedId] = useState(null);
   const [showPass, setShowPass] = useState({});
+  const [selectedClient, setSelectedClient] = useState(null);
 
   const handleSubmit = () => {
     if (!form.nom || !form.email || !form.motDePasse || !form.dateReabonnement) {
@@ -346,7 +348,7 @@ const Comptes = () => {
                                     }}>
                                       <User size={13} color="#8888aa" />
                                     </div>
-                                    <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: '600' }}>{client.nom}</span>
+                                    <span onClick={() => setSelectedClient(client)} style={{ color: '#fff', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: '#7c3aed' }}>{client.nom}</span>
                                   </div>
                                   <span style={{
                                     color: jours < 0 ? '#ef4444' : jours <= 5 ? '#f59e0b' : '#10b981',
@@ -369,6 +371,7 @@ const Comptes = () => {
         </div>
       )}
     </div>
+      {selectedClient && <ClientModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
   );
 };
 
@@ -379,5 +382,10 @@ const btnPrimary = { background: 'linear-gradient(135deg, #7c3aed, #9d5ff0)', bo
 const btnSecondary = { background: '#2a2a3a', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#8888aa', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', fontFamily: "'Syne', sans-serif" };
 const iconBtn = { background: '#2a2a3a', border: 'none', borderRadius: '8px', padding: '7px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const detailItem = { display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#0a0a0f', borderRadius: '8px', padding: '10px' };
+
+{selectedClient && <ClientModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
+    </div>
+  );
+};
 
 export default Comptes;
