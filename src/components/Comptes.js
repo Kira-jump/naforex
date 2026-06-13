@@ -368,7 +368,7 @@ const Comptes = () => {
               </div>
             );
           })}
-        </div>
+    </div>
       )}
     </div>
       {selectedClient && <ClientModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
