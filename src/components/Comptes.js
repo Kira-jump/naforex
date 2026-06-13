@@ -368,10 +368,10 @@ const Comptes = () => {
               </div>
             );
           })}
-    </div>
+        </div>
       )}
-    </div>
       {selectedClient && <ClientModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
+    </div>
   );
 };
 
@@ -382,10 +382,5 @@ const btnPrimary = { background: 'linear-gradient(135deg, #7c3aed, #9d5ff0)', bo
 const btnSecondary = { background: '#2a2a3a', border: 'none', borderRadius: '10px', padding: '9px 16px', color: '#8888aa', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', fontFamily: "'Syne', sans-serif" };
 const iconBtn = { background: '#2a2a3a', border: 'none', borderRadius: '8px', padding: '7px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const detailItem = { display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#0a0a0f', borderRadius: '8px', padding: '10px' };
-
-{selectedClient && <ClientModal client={selectedClient} onClose={() => setSelectedClient(null)} />}
-    </div>
-  );
-};
 
 export default Comptes;
