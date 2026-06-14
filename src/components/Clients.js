@@ -120,6 +120,7 @@ const Clients = () => {
         </h2>
         <button onClick={() => { setShowForm(true); setEditId(null); setForm(emptyClient); }} style={btnPrimary}>
           <Plus size={15} /><span>Ajouter</span>
+        </button>
       </div>
       {/* Barre de recherche */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#16161f", border: "1px solid #2a2a3a", borderRadius: "12px", padding: "10px 14px", marginBottom: "14px", marginTop: "14px" }}>
