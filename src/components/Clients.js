@@ -133,19 +133,7 @@ const Clients = () => {
         />
         {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", color: "#555570", cursor: "pointer", fontSize: "1rem" }}>✕</button>}
       </div>
-      <div style={{ display: "none" }}>
-        </button>
-      </div>
-
-      {/* Recherche */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#16161f", border: "1px solid #2a2a3a", borderRadius: "12px", padding: "10px 14px", marginBottom: "14px" }}>
-        <Search size={16} color="#555570" />
-        <input placeholder="Nom ou WhatsApp..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, background: "none", border: "none", color: "#fff", fontSize: "0.9rem", outline: "none" }} />
-        {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", color: "#555570", cursor: "pointer", padding: "0" }}>✕</button>}
-      </div>
-
-      {/* Filtres */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+      <div style={{ display: "flex", gap: "6px", marginBottom: "8px", flexWrap: "wrap" }}>
         {['all', 'netflix', 'spotify', 'prime'].map(s => (
           <button key={s} onClick={() => setFilterService(s)} style={{
             padding: '5px 12px', borderRadius: '20px', border: '1px solid',
