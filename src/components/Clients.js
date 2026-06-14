@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
-  Plus, Pencil, Archive, ArrowLeftRight, MessageCircle,
+  Plus, Pencil, Archive, ArrowLeftRight, MessageCircle, Search,
   Calendar, DollarSign, Phone, User, Package,
   Wifi, WifiOff, AlertTriangle, ChevronDown, ChevronUp
 } from 'lucide-react';
@@ -23,6 +23,7 @@ const Clients = () => {
   const [showTransfer, setShowTransfer] = useState(null);
   const [transferCompteId, setTransferCompteId] = useState('');
   const [expandedId, setExpandedId] = useState(null);
+  const [search, setSearch] = useState("");
 
   const totalActifs = data.clients.filter(c => getStatutClient(c) === 'actif').length;
   const totalWarning = data.clients.filter(c => getStatutClient(c) === 'warning').length;
@@ -95,6 +96,14 @@ const Clients = () => {
   if (filterStatut === 'actif') filtered = filtered.filter(c => getStatutClient(c) === 'actif');
   if (filterStatut === 'rouge') filtered = filtered.filter(c => getStatutClient(c) === 'rouge');
   if (filterStatut === 'warning') filtered = filtered.filter(c => getStatutClient(c) === 'warning');
+  if (search.trim()) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(c =>
+      c.nom.toLowerCase().includes(q) ||
+      (c.whatsapp && c.whatsapp.includes(q))
+    );
+  }
+
   filtered.sort((a, b) => {
     const minA = Math.min(...a.services.map(s => getJoursRestants(s.dateExpiration)));
     const minB = Math.min(...b.services.map(s => getJoursRestants(s.dateExpiration)));
@@ -111,7 +120,27 @@ const Clients = () => {
         </h2>
         <button onClick={() => { setShowForm(true); setEditId(null); setForm(emptyClient); }} style={btnPrimary}>
           <Plus size={15} /><span>Ajouter</span>
+      </div>
+      {/* Barre de recherche */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#16161f", border: "1px solid #2a2a3a", borderRadius: "12px", padding: "10px 14px", marginBottom: "14px", marginTop: "14px" }}>
+        <Search size={16} color="#555570" />
+        <input
+          placeholder="Rechercher par nom ou WhatsApp..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ flex: 1, background: "none", border: "none", color: "#fff", fontSize: "0.9rem", outline: "none" }}
+        />
+        {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", color: "#555570", cursor: "pointer", fontSize: "1rem" }}>✕</button>}
+      </div>
+      <div style={{ display: "none" }}>
         </button>
+      </div>
+
+      {/* Recherche */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#16161f", border: "1px solid #2a2a3a", borderRadius: "12px", padding: "10px 14px", marginBottom: "14px" }}>
+        <Search size={16} color="#555570" />
+        <input placeholder="Nom ou WhatsApp..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, background: "none", border: "none", color: "#fff", fontSize: "0.9rem", outline: "none" }} />
+        {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", color: "#555570", cursor: "pointer", padding: "0" }}>✕</button>}
       </div>
 
       {/* Filtres */}

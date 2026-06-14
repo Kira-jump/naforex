@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { User, Package, RotateCcw, Trash2 } from 'lucide-react';
+import RestoreClientModal from './RestoreClientModal';
 
 const serviceColors = { netflix: '#e50914', spotify: '#1db954', prime: '#00a8e1' };
 const serviceLabels = { netflix: 'Netflix', spotify: 'Spotify', prime: 'Prime' };
 
 const ResetBase = () => {
-  const { data, restoreClient, deleteDefinitif, restoreCompte, deleteCompteDefinitif } = useApp();
+  const { data, deleteDefinitif, restoreCompte, deleteCompteDefinitif } = useApp();
   const [activeTab, setActiveTab] = useState('clients');
+  const [restoreClient, setRestoreClient] = useState(null);
 
   const corbeilleComptes = data.corbeilleComptes || [];
 
@@ -19,30 +21,23 @@ const ResetBase = () => {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-        <button onClick={() => setActiveTab('clients')} style={{
-          flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid',
-          borderColor: activeTab === 'clients' ? '#7c3aed' : '#2a2a3a',
-          background: activeTab === 'clients' ? '#7c3aed18' : '#16161f',
-          color: activeTab === 'clients' ? '#7c3aed' : '#555570',
-          fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer',
-          fontFamily: "'Syne', sans-serif",
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-        }}>
-          <User size={15} />
-          Clients ({data.resetBase.length})
-        </button>
-        <button onClick={() => setActiveTab('comptes')} style={{
-          flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid',
-          borderColor: activeTab === 'comptes' ? '#7c3aed' : '#2a2a3a',
-          background: activeTab === 'comptes' ? '#7c3aed18' : '#16161f',
-          color: activeTab === 'comptes' ? '#7c3aed' : '#555570',
-          fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer',
-          fontFamily: "'Syne', sans-serif",
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-        }}>
-          <Package size={15} />
-          Comptes ({corbeilleComptes.length})
-        </button>
+        {[
+          { id: 'clients', label: 'Clients', count: data.resetBase.length, Icon: User },
+          { id: 'comptes', label: 'Comptes', count: corbeilleComptes.length, Icon: Package },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+            flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid',
+            borderColor: activeTab === tab.id ? '#7c3aed' : '#2a2a3a',
+            background: activeTab === tab.id ? '#7c3aed18' : '#16161f',
+            color: activeTab === tab.id ? '#7c3aed' : '#555570',
+            fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer',
+            fontFamily: "'Syne', sans-serif",
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+          }}>
+            <tab.Icon size={15} />
+            {tab.label} ({tab.count})
+          </button>
+        ))}
       </div>
 
       {/* Clients */}
@@ -90,7 +85,7 @@ const ResetBase = () => {
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: '6px', marginLeft: '10px' }}>
-                        <button onClick={() => restoreClient(client.id)} style={{
+                        <button onClick={() => setRestoreClient(client)} style={{
                           background: '#10b98118', border: '1px solid #10b98140',
                           borderRadius: '8px', padding: '7px',
                           color: '#10b981', cursor: 'pointer',
@@ -183,6 +178,14 @@ const ResetBase = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Modal restauration client */}
+      {restoreClient && (
+        <RestoreClientModal
+          client={restoreClient}
+          onClose={() => setRestoreClient(null)}
+        />
       )}
     </div>
   );

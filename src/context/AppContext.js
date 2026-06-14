@@ -219,10 +219,11 @@ export const AppProvider = ({ children }) => {
     });
   };
 
-  const restoreClient = (clientId) => {
+  const restoreClient = (clientId, newServices) => {
     const client = data.resetBase.find(c => c.id === clientId);
     if (!client) return;
     const { resetDate, ...restored } = client;
+    if (newServices) restored.services = newServices;
     saveData({
       ...data,
       clients: [...data.clients, restored],
