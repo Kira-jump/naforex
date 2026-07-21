@@ -4,7 +4,8 @@ import Comptes from '../components/Comptes';
 import Clients from '../components/Clients';
 import ResetBase from '../components/ResetBase';
 import Parametres from '../components/Parametres';
-import { Users, Package, Archive, Settings, LogOut, User } from 'lucide-react';
+import Statistiques from '../components/Statistiques';
+import { Users, Package, Archive, Settings, LogOut, User, BarChart3 } from 'lucide-react';
 
 const Dashboard = () => {
   const { currentUser, logout } = useApp();
@@ -14,6 +15,7 @@ const Dashboard = () => {
     { id: 'clients', label: 'Clients', icon: Users },
     { id: 'comptes', label: 'Comptes', icon: Package },
     { id: 'reset', label: 'Reset', icon: Archive },
+    { id: 'stats', label: 'Stats', icon: BarChart3 },
     { id: 'params', label: 'Params', icon: Settings },
   ];
 
@@ -122,6 +124,7 @@ const Dashboard = () => {
           {activeTab === 'clients' && <Clients />}
           {activeTab === 'comptes' && <Comptes />}
           {activeTab === 'reset' && <ResetBase />}
+          {activeTab === 'stats' && <Statistiques />}
           {activeTab === 'params' && <Parametres />}
         </div>
       </div>
