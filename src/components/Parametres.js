@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { User, Lock, RefreshCw, LogOut, Save, Cloud } from 'lucide-react';
+import { User, Lock, RefreshCw, LogOut, Save, Cloud, Fingerprint } from 'lucide-react';
+import { isBiometricSupported, isBiometricEnabled, registerBiometric, disableBiometric } from '../utils/biometricService';
 
 const Parametres = () => {
   const { users, currentUser, updateUser, logout, syncing, syncFromFirebase } = useApp();
@@ -8,6 +9,14 @@ const Parametres = () => {
   const [form, setForm] = useState({ username: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [bioSupported, setBioSupported] = useState(false);
+  const [bioEnabled, setBioEnabled] = useState(false);
+  const [bioLoading, setBioLoading] = useState(false);
+
+  useEffect(() => {
+    setBioSupported(isBiometricSupported());
+    setBioEnabled(isBiometricEnabled());
+  }, []);
 
   const handleEdit = (user) => {
     setEditId(user.id);
@@ -31,6 +40,26 @@ const Parametres = () => {
   const handleSync = async () => {
     await syncFromFirebase();
     setSuccess('Données synchronisées !');
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
+  const handleEnableBio = async () => {
+    setBioLoading(true);
+    const ok = await registerBiometric(currentUser);
+    if (ok) {
+      setBioEnabled(true);
+      setSuccess('Empreinte activée !');
+      setTimeout(() => setSuccess(''), 3000);
+    } else {
+      setError("Impossible d'activer l'empreinte");
+    }
+    setBioLoading(false);
+  };
+
+  const handleDisableBio = () => {
+    disableBiometric();
+    setBioEnabled(false);
+    setSuccess('Empreinte désactivée');
     setTimeout(() => setSuccess(''), 3000);
   };
 
@@ -108,6 +137,53 @@ const Parametres = () => {
           💡 Les 2 utilisateurs partagent automatiquement les mêmes données via Firebase.
         </p>
       </div>
+
+      {/* Empreinte digitale */}
+      {bioSupported && (
+        <div style={{
+          background: '#16161f', border: '1px solid #2a2a3a',
+          borderRadius: '16px', padding: '20px', marginBottom: '16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Fingerprint size={18} color="#7c3aed" />
+            <h3 style={{ color: '#fff', fontSize: '1rem', fontWeight: '700' }}>
+              Empreinte digitale
+            </h3>
+          </div>
+
+          <div style={{
+            background: bioEnabled ? '#10b98115' : '#0a0a0f',
+            border: `1px solid ${bioEnabled ? '#10b98130' : '#2a2a3a'}`,
+            borderRadius: '10px', padding: '12px 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '14px',
+          }}>
+            <div>
+              <div style={{ color: bioEnabled ? '#10b981' : '#8888aa', fontWeight: '600', fontSize: '0.85rem' }}>
+                {bioEnabled ? '✅ Activée' : 'Non activée'}
+              </div>
+              <div style={{ color: '#555570', fontSize: '0.75rem', marginTop: '2px' }}>
+                Connecte-toi avec ton empreinte ou ton visage
+              </div>
+            </div>
+          </div>
+
+          {bioEnabled ? (
+            <button onClick={handleDisableBio} style={{
+              ...btnSecondary, color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+              Désactiver
+            </button>
+          ) : (
+            <button onClick={handleEnableBio} disabled={bioLoading} style={{
+              ...btnPrimary, opacity: bioLoading ? 0.7 : 1,
+            }}>
+              <Fingerprint size={14} />
+              {bioLoading ? 'Activation...' : 'Activer l empreinte'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Utilisateurs */}
       <div style={{

@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { isBiometricSupported, isBiometricEnabled, verifyBiometric } from '../utils/biometricService';
+import { Fingerprint } from 'lucide-react';
 
 const Login = () => {
-  const { login } = useApp();
+  const { login, users } = useApp();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioLoading, setBioLoading] = useState(false);
+
+  useEffect(() => {
+    setBioAvailable(isBiometricSupported() && isBiometricEnabled());
+  }, []);
 
   const handleLogin = () => {
     if (!username || !password) {
@@ -21,6 +29,23 @@ const Login = () => {
         setLoading(false);
       }
     }, 600);
+  };
+
+  const handleBiometricLogin = async () => {
+    setError('');
+    setBioLoading(true);
+    const result = await verifyBiometric();
+    if (result) {
+      const user = users.find(u => u.id === result.userId);
+      if (user) {
+        login(user.username, user.password);
+      } else {
+        setError('Utilisateur introuvable, reconnecte-toi manuellement');
+      }
+    } else {
+      setError('Authentification biométrique échouée');
+    }
+    setBioLoading(false);
   };
 
   const handleKey = (e) => {
@@ -41,7 +66,6 @@ const Login = () => {
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-      {/* Background glow */}
       <div style={{
         position: 'absolute',
         width: '400px',
@@ -54,7 +78,6 @@ const Login = () => {
       }} />
 
       <div style={{ width: '100%', maxWidth: '400px', position: 'relative' }}>
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <div style={{
             display: 'inline-block',
@@ -72,7 +95,6 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Card */}
         <div style={{
           background: '#16161f',
           border: '1px solid #2a2a3a',
@@ -90,6 +112,41 @@ const Login = () => {
           <p style={{ color: '#555570', fontSize: '0.85rem', marginBottom: '28px' }}>
             Entrez vos identifiants pour accéder
           </p>
+
+          {bioAvailable && (
+            <button
+              onClick={handleBiometricLogin}
+              disabled={bioLoading}
+              style={{
+                width: '100%',
+                background: '#7c3aed15',
+                border: '1px solid #7c3aed40',
+                borderRadius: '12px',
+                padding: '14px',
+                color: '#7c3aed',
+                fontSize: '0.95rem',
+                fontWeight: '700',
+                cursor: bioLoading ? 'not-allowed' : 'pointer',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontFamily: "'Syne', sans-serif",
+              }}
+            >
+              <Fingerprint size={20} />
+              {bioLoading ? 'Vérification...' : 'Se connecter avec empreinte'}
+            </button>
+          )}
+
+          {bioAvailable && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <div style={{ flex: 1, height: '1px', background: '#2a2a3a' }} />
+              <span style={{ color: '#555570', fontSize: '0.72rem' }}>OU</span>
+              <div style={{ flex: 1, height: '1px', background: '#2a2a3a' }} />
+            </div>
+          )}
 
           <div style={{ marginBottom: '14px' }}>
             <label style={{ color: '#8888aa', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>
@@ -156,7 +213,6 @@ const Login = () => {
           </button>
         </div>
 
-        {/* Footer */}
         <p style={{
           textAlign: 'center',
           color: '#2a2a3a',
