@@ -7,7 +7,7 @@ const serviceColors = { netflix: '#e50914', spotify: '#1db954', prime: '#00a8e1'
 const serviceLabels = { netflix: 'Netflix', spotify: 'Spotify', prime: 'Prime' };
 
 const ClientModal = ({ client, onClose }) => {
-  const { data, getJoursRestants, getStatutClient, getStatutService, resetClient } = useApp();
+  const { data, getJoursRestants, getStatutClient, getStatutService, resetClient, updateClient } = useApp();
 
   if (!client) return null;
 
@@ -38,6 +38,11 @@ const ClientModal = ({ client, onClose }) => {
       resetClient(client.id);
       onClose();
     }
+  };
+
+  const handleDateChange = (index, newDate) => {
+    const newServices = client.services.map((s, i) => i === index ? { ...s, dateExpiration: newDate } : s);
+    updateClient(client.id, { ...client, services: newServices });
   };
 
   return (
@@ -159,9 +164,16 @@ const ClientModal = ({ client, onClose }) => {
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Calendar size={12} color="#555570" />
-                      <span style={{ color: '#8888aa', fontSize: '0.75rem' }}>
-                        {new Date(srv.dateExpiration).toLocaleDateString('fr-FR')}
-                      </span>
+                      <input
+                        type="date"
+                        value={srv.dateExpiration}
+                        onChange={e => handleDateChange(index, e.target.value)}
+                        style={{
+                          background: 'none', border: 'none', color: '#8888aa',
+                          fontSize: '0.75rem', fontFamily: "'Syne', sans-serif",
+                          outline: 'none', cursor: 'pointer', padding: 0,
+                        }}
+                      />
                     </div>
                     {srv.prix && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
