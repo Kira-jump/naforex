@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { generateReceipt } from '../utils/receiptService';
 import {
   Plus, Pencil, Archive, ArrowLeftRight, MessageCircle, Search,
   Calendar, DollarSign, Phone, User, Package,
@@ -56,25 +55,8 @@ const Clients = () => {
         if (seats.available <= 0) { alert(`Le compte ${s.service} est plein !`); return; }
       }
     }
-    if (editId) {
-      const oldClient = data.clients.find(c => c.id === editId);
-      updateClient(editId, form);
-      form.services.forEach((s, i) => {
-        const oldService = oldClient?.services?.[i];
-        const isRenewal = oldService && oldService.dateExpiration !== s.dateExpiration;
-        if (!oldService || isRenewal) {
-          const compte = data.comptes.find(c => c.id === s.compteId);
-          generateReceipt(form, s, compte, isRenewal);
-        }
-      });
-      setEditId(null);
-    } else {
-      addClient(form);
-      form.services.forEach(s => {
-        const compte = data.comptes.find(c => c.id === s.compteId);
-        generateReceipt(form, s, compte, false);
-      });
-    }
+    if (editId) { updateClient(editId, form); setEditId(null); }
+    else addClient(form);
     setForm(emptyClient);
     setShowForm(false);
   };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { X, Phone, DollarSign, Calendar, MessageCircle, User, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
+import { X, Phone, DollarSign, Calendar, MessageCircle, User, Wifi, WifiOff, AlertTriangle, Download } from 'lucide-react';
+import { generateReceipt } from '../utils/receiptService';
 
 const serviceColors = { netflix: '#e50914', spotify: '#1db954', prime: '#00a8e1' };
 const serviceLabels = { netflix: 'Netflix', spotify: 'Spotify', prime: 'Prime' };
@@ -49,14 +50,12 @@ const ClientModal = ({ client, onClose }) => {
         padding: '24px',
       }} onClick={e => e.stopPropagation()}>
 
-        {/* Handle bar */}
         <div style={{
           width: '40px', height: '4px',
           background: '#2a2a3a', borderRadius: '2px',
           margin: '0 auto 20px',
         }} />
 
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
@@ -83,7 +82,6 @@ const ClientModal = ({ client, onClose }) => {
           </button>
         </div>
 
-        {/* Infos contact */}
         {(client.whatsapp) && (
           <div style={{
             background: '#0a0a0f', borderRadius: '12px',
@@ -113,7 +111,6 @@ const ClientModal = ({ client, onClose }) => {
           </div>
         )}
 
-        {/* Services */}
         <div style={{ marginBottom: '16px' }}>
           <div style={{ color: '#555570', fontSize: '0.72rem', fontWeight: '600', marginBottom: '10px', letterSpacing: '0.05em' }}>
             ABONNEMENTS ({client.services.length})
@@ -146,7 +143,7 @@ const ClientModal = ({ client, onClose }) => {
                       {jours < 0 ? `Expiré ${Math.abs(jours)}j` : `${jours}j restants`}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '10px' }}>
                     {compte && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <span style={{ color: '#555570', fontSize: '0.75rem' }}>Compte :</span>
@@ -166,13 +163,23 @@ const ClientModal = ({ client, onClose }) => {
                       </div>
                     )}
                   </div>
+                  <button onClick={() => generateReceipt(client, srv, compte, false)} style={{
+                    width: '100%',
+                    background: `${color}15`, border: `1px solid ${color}40`,
+                    borderRadius: '8px', padding: '8px',
+                    color: color, fontSize: '0.78rem', fontWeight: '700',
+                    cursor: 'pointer', fontFamily: "'Syne', sans-serif",
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  }}>
+                    <Download size={13} />
+                    Télécharger le reçu
+                  </button>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Bouton fermer */}
         <button onClick={onClose} style={{
           width: '100%', background: '#2a2a3a',
           border: 'none', borderRadius: '12px',
