@@ -1,13 +1,13 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { X, Phone, DollarSign, Calendar, MessageCircle, User, Wifi, WifiOff, AlertTriangle, Download } from 'lucide-react';
+import { X, Phone, DollarSign, Calendar, MessageCircle, User, Wifi, WifiOff, AlertTriangle, Download, Archive } from 'lucide-react';
 import { generateReceipt } from '../utils/receiptService';
 
 const serviceColors = { netflix: '#e50914', spotify: '#1db954', prime: '#00a8e1' };
 const serviceLabels = { netflix: 'Netflix', spotify: 'Spotify', prime: 'Prime' };
 
 const ClientModal = ({ client, onClose }) => {
-  const { data, getJoursRestants, getStatutClient, getStatutService } = useApp();
+  const { data, getJoursRestants, getStatutClient, getStatutService, resetClient } = useApp();
 
   if (!client) return null;
 
@@ -29,8 +29,15 @@ const ClientModal = ({ client, onClose }) => {
       const jours = getJoursRestants(s.dateExpiration);
       return `${serviceLabels[s.service]}: ${jours < 0 ? 'expiré' : `${jours}j restants`}`;
     }).join('\n');
-    const msg = encodeURIComponent(`Bonjour ${client.nom} 👋\nVoici l'état de votre abonnement NaforeX:\n\n${services}\n\nMerci de renouveler à temps 🙏`);
+    const msg = encodeURIComponent(`Bonjour ${client.nom} 👋\nVoici l'état de votre abonnement NaforeX:\n\n${services}\n\n⚠️ Merci de payer à temps pour éviter la coupure de votre compte.\n📸 Envoyez-nous la capture d'écran de votre paiement pour confirmation.\n\nMerci pour votre confiance 🙏`);
     window.open(`https://wa.me/${numero}?text=${msg}`, '_blank');
+  };
+
+  const handleRemove = () => {
+    if (window.confirm(`Retirer ${client.nom} de la liste active ? Il ira dans Reset Base.`)) {
+      resetClient(client.id);
+      onClose();
+    }
   };
 
   return (
@@ -180,6 +187,19 @@ const ClientModal = ({ client, onClose }) => {
           </div>
         </div>
 
+
+        <button onClick={handleRemove} style={{
+          width: '100%', background: '#ef444415',
+          border: '1px solid #ef444440', borderRadius: '12px',
+          padding: '14px', color: '#ef4444',
+          fontSize: '0.9rem', fontWeight: '700',
+          cursor: 'pointer', fontFamily: "'Syne', sans-serif",
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+          marginBottom: '10px',
+        }}>
+          <Archive size={15} />
+          Retirer ce client
+        </button>
         <button onClick={onClose} style={{
           width: '100%', background: '#2a2a3a',
           border: 'none', borderRadius: '12px',
