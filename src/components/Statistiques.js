@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { TrendingUp, TrendingDown, DollarSign, Users, UserX } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Users, UserX, ChevronRight, ArrowLeft } from 'lucide-react';
+import CompteHistorique from './CompteHistorique';
 
 const serviceColors = { netflix: '#e50914', spotify: '#1db954', prime: '#00a8e1' };
 const serviceLabels = { netflix: 'Netflix', spotify: 'Spotify', prime: 'Prime' };
 
 const Statistiques = () => {
   const { data } = useApp();
+  const [viewService, setViewService] = useState(null);
+  const [selectedCompte, setSelectedCompte] = useState(null);
 
   const getStatsForService = (service) => {
     let revenue = 0;
@@ -41,6 +44,75 @@ const Statistiques = () => {
   const totalChurn = stats.reduce((sum, s) => sum + s.churnCount, 0);
   const bestService = [...stats].sort((a, b) => b.revenue - a.revenue)[0];
   const worstChurnService = [...stats].sort((a, b) => b.churnRate - a.churnRate)[0];
+
+  // Vue liste des comptes d'un service
+  if (viewService) {
+    const comptesDuService = data.comptes.filter(c => c.service === viewService);
+    const color = serviceColors[viewService];
+
+    const getCompteStats = (compteId) => {
+      let gains = 0, pertes = 0, revenue = 0;
+      data.clients.forEach(c => {
+        const srv = c.services?.find(s => s.compteId === compteId);
+        if (srv) { gains++; revenue += Number(srv.prix) || 0; }
+      });
+      data.resetBase.forEach(c => {
+        const srv = c.services?.find(s => s.compteId === compteId);
+        if (srv) pertes++;
+      });
+      return { gains, pertes, revenue };
+    };
+
+    return (
+      <div style={{ paddingBottom: '40px' }}>
+        <button onClick={() => setViewService(null)} style={{
+          background: 'none', border: 'none', color: '#8888aa',
+          display: 'flex', alignItems: 'center', gap: '6px',
+          marginBottom: '16px', cursor: 'pointer', fontSize: '0.85rem',
+          fontFamily: "'Syne', sans-serif", padding: 0,
+        }}>
+          <ArrowLeft size={16} />
+          Retour aux statistiques
+        </button>
+
+        <h2 style={{ color: '#fff', fontSize: '1.2rem', fontWeight: '700', marginBottom: '16px' }}>
+          <span style={{ color }}>{serviceLabels[viewService]}</span> — Comptes ({comptesDuService.length})
+        </h2>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {comptesDuService.map(compte => {
+            const cs = getCompteStats(compte.id);
+            return (
+              <button key={compte.id} onClick={() => setSelectedCompte(compte)} style={{
+                background: '#16161f', border: '1px solid #2a2a3a',
+                borderLeft: `3px solid ${color}`,
+                borderRadius: '12px', padding: '14px 16px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                cursor: 'pointer', width: '100%', textAlign: 'left',
+                fontFamily: "'Syne', sans-serif",
+              }}>
+                <div>
+                  <div style={{ color: '#fff', fontWeight: '700', fontSize: '0.9rem', marginBottom: '4px' }}>
+                    {compte.nom}
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <span style={{ color: '#10b981', fontSize: '0.72rem' }}>+{cs.gains} gagnés</span>
+                    <span style={{ color: '#ef4444', fontSize: '0.72rem' }}>−{cs.pertes} perdus</span>
+                    <span style={{ color: '#8888aa', fontSize: '0.72rem' }}>{cs.revenue.toLocaleString()} GNF</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} color="#555570" />
+              </button>
+            );
+          })}
+        </div>
+
+        {selectedCompte && (
+          <CompteHistorique compte={selectedCompte} onClose={() => setSelectedCompte(null)} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{ paddingBottom: '40px' }}>
@@ -106,7 +178,7 @@ const Statistiques = () => {
       )}
 
       <div style={{ color: '#555570', fontSize: '0.75rem', fontWeight: '600', marginBottom: '10px', letterSpacing: '0.05em' }}>
-        DÉTAIL PAR SERVICE
+        DÉTAIL PAR SERVICE — clique pour voir les comptes
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -115,9 +187,11 @@ const Statistiques = () => {
           const maxRevenue = Math.max(...stats.map(x => x.revenue), 1);
           const barWidth = (s.revenue / maxRevenue) * 100;
           return (
-            <div key={s.service} style={{
+            <button key={s.service} onClick={() => setViewService(s.service)} style={{
               background: '#16161f', border: '1px solid #2a2a3a',
               borderRadius: '14px', padding: '16px',
+              width: '100%', textAlign: 'left', cursor: 'pointer',
+              fontFamily: "'Syne', sans-serif",
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <span style={{
@@ -127,9 +201,12 @@ const Statistiques = () => {
                 }}>
                   {serviceLabels[s.service]}
                 </span>
-                <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '800' }}>
-                  {s.revenue.toLocaleString()} GNF
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#fff', fontSize: '1rem', fontWeight: '800' }}>
+                    {s.revenue.toLocaleString()} GNF
+                  </span>
+                  <ChevronRight size={16} color="#555570" />
+                </div>
               </div>
 
               <div style={{ background: '#0a0a0f', borderRadius: '6px', height: '6px', marginBottom: '14px', overflow: 'hidden' }}>
@@ -158,7 +235,7 @@ const Statistiques = () => {
                   <div style={{ color: '#555570', fontSize: '0.65rem' }}>Taux churn</div>
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

@@ -8,7 +8,7 @@ import {
 
 const serviceColors = { netflix: '#e50914', spotify: '#1db954', prime: '#00a8e1' };
 const serviceLabels = { netflix: 'Netflix', spotify: 'Spotify', prime: 'Prime' };
-const emptyService = { service: 'netflix', compteId: '', dateExpiration: '', prix: '' };
+const emptyService = { service: 'netflix', compteId: '', dateExpiration: '', prix: '', dateAjout: '' };
 const emptyClient = { nom: '', whatsapp: '', services: [{ ...emptyService }] };
 
 const Clients = () => {
@@ -55,8 +55,10 @@ const Clients = () => {
         if (seats.available <= 0) { alert(`Le compte ${s.service} est plein !`); return; }
       }
     }
-    if (editId) { updateClient(editId, form); setEditId(null); }
-    else addClient(form);
+    const now = new Date().toISOString();
+    const stampedForm = { ...form, services: form.services.map(s => s.dateAjout ? s : { ...s, dateAjout: now }) };
+    if (editId) { updateClient(editId, stampedForm); setEditId(null); }
+    else addClient(stampedForm);
     setForm(emptyClient);
     setShowForm(false);
   };
