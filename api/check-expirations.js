@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     const firebaseUrl = 'https://firestore.googleapis.com/v1/projects/naforex-b26f3/databases/(default)/documents/naforex/data'\;
     const response = await fetch(firebaseUrl);
@@ -76,4 +76,4 @@ export default async function handler(req, res) {
     console.error('Erreur cron:', error);
     return res.status(500).json({ error: error.message });
   }
-}
+};
