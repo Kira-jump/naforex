@@ -1,6 +1,6 @@
 module.exports = async function handler(req, res) {
   try {
-    const firebaseUrl = 'https://firestore.googleapis.com/v1/projects/naforex-b26f3/databases/(default)/documents/naforex/data'\;
+    const firebaseUrl = 'https://firestore.googleapis.com/v1/projects/naforex-b26f3/databases/(default)/documents/naforex/data';
     const response = await fetch(firebaseUrl);
     const result = await response.json();
 
